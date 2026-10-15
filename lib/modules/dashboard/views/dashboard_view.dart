@@ -7,136 +7,139 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../controllers/dashboard_controller.dart';
+import '../../../app/app_routes.dart';
+import '../../profile/views/profile_view.dart';
 
 class DashboardView extends StatefulWidget {
-  const DashboardView({super.key});
+const DashboardView({super.key});
 
-  @override
-  State<DashboardView> createState() => _DashboardViewState();
+@override
+State<DashboardView> createState() => _DashboardViewState();
 }
 
 class _DashboardViewState extends State<DashboardView> {
-  final DashboardController controller = Get.put(DashboardController());
+final DashboardController controller = Get.put(DashboardController());
 
-  int selectedIndex = 0;
+int selectedIndex = 0;
 
-  final List<String> titles = const [
-    'Home',
-    'Attendance',
-    'Reports',
-    'Profile',
-  ];
+final List<String> titles = const [
+'Home',
+'Attendance',
+'Reports',
+'Profile',
+];
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      drawer: _buildDrawer(context),
-      appBar: AppBar(
-        backgroundColor: AppTheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        titleSpacing: 8,
-        leading: Builder(
-          builder: (context) => IconButton(
-            tooltip: 'Open menu',
-            onPressed: () => Scaffold.of(context).openDrawer(),
-            icon: const Icon(
-              Icons.menu_rounded,
-              color: AppTheme.primary,
-            ),
-          ),
-        ),
-        title: Row(
-          children: [
-            Container(
-              height: 38,
-              width: 38,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppTheme.blueLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Image.asset(
-                'assets/images/gopang_logo.png',
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Icon(
-                  Icons.business_rounded,
-                  color: AppTheme.primary,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Gopang Interns Portal',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.primary,
-                    ),
-                  ),
-                  Text(
-                    titles[selectedIndex].toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
-                      color: AppTheme.mediumBlue,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: const [],
-      ),
-      body: IndexedStack(
-        index: selectedIndex,
-        children: [
-          _buildHome(),
-          _buildAttendance(),
-          _buildReports(),
-          _buildProfile(),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          border: const Border(
-            top: BorderSide(color: AppTheme.border),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primary.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: NavigationBar(
-            height: 66,
-            backgroundColor: AppTheme.surface,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            selectedIndex: selectedIndex,
-            onDestinationSelected: _selectTab,
-            indicatorColor: AppTheme.blueLight,
-            labelBehavior:
-            NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home_rounded),
-                label: 'Home',
-              ),
-              NavigationDestination(
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+backgroundColor: AppTheme.background,
+drawer: _buildDrawer(context),
+appBar: AppBar(
+backgroundColor: AppTheme.surface,
+surfaceTintColor: Colors.transparent,
+elevation: 0,
+titleSpacing: 8,
+leading: Builder(
+builder: (context) => IconButton(
+tooltip: 'Open menu',
+onPressed: () => Scaffold.of(context).openDrawer(),
+icon: const Icon(
+Icons.menu_rounded,
+color: AppTheme.primary,
+),
+),
+),
+title: Row(
+children: [
+Container(
+height: 38,
+width: 38,
+padding: const EdgeInsets.all(4),
+decoration: BoxDecoration(
+color: AppTheme.blueLight,
+borderRadius: BorderRadius.circular(12),
+),
+child: Image.asset(
+'assets/images/gopang_logo.png',
+fit: BoxFit.contain,
+errorBuilder: (_, _, _) => const Icon(
+Icons.business_rounded,
+color: AppTheme.primary,
+),
+),
+),
+const SizedBox(width: 10),
+Expanded(
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+const Text(
+'Gopang Interns Portal',
+style: TextStyle(
+fontSize: 17,
+fontWeight: FontWeight.w800,
+color: AppTheme.primary,
+),
+),
+Text(
+titles[selectedIndex].toUpperCase(),
+style: const TextStyle(
+fontSize: 9,
+fontWeight: FontWeight.w700,
+letterSpacing: 1.5,
+color: AppTheme.mediumBlue,
+),
+),
+],
+),
+),
+],
+),
+actions: const [],
+),
+
+  body: IndexedStack(
+    index: selectedIndex,
+    children: [
+      _buildHome(),
+      _buildAttendance(),
+      _buildReports(),
+    ],
+  ),
+
+bottomNavigationBar: Container(
+decoration: BoxDecoration(
+color: AppTheme.surface,
+border: const Border(
+top: BorderSide(color: AppTheme.border),
+),
+boxShadow: [
+BoxShadow(
+color: AppTheme.primary.withValues(alpha: 0.06),
+blurRadius: 16,
+offset: const Offset(0, -4),
+),
+],
+),
+child: SafeArea(
+top: false,
+child: NavigationBar(
+height: 66,
+backgroundColor: AppTheme.surface,
+surfaceTintColor: Colors.transparent,
+elevation: 0,
+selectedIndex: selectedIndex,
+onDestinationSelected: _selectTab,
+indicatorColor: AppTheme.blueLight,
+labelBehavior:
+NavigationDestinationLabelBehavior.alwaysShow,
+destinations: const [
+NavigationDestination(
+icon: Icon(Icons.home_outlined),
+selectedIcon: Icon(Icons.home_rounded),
+label: 'Home',
+),
+NavigationDestination(
                 icon: Icon(Icons.access_time_outlined),
                 selectedIcon: Icon(Icons.access_time_filled_rounded),
                 label: 'Attendance',
@@ -158,19 +161,29 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  void _selectTab(int index) {
-    setState(() => selectedIndex = index);
 
-    if (index == 1) {
-      controller.loadAttendanceHistory(range: 'month');
-    } else if (index == 2) {
-      controller.loadReports();
-    } else if (index == 3) {
-      controller.loadProfile();
-    }
+
+
+void _selectTab(int index) {
+  if (index == 2) {
+    Get.toNamed(AppRoutes.reports);
+    return;
   }
 
-  Future<void> _refreshCurrentPage() async {
+  if (index == 3) {
+    Get.to(() => const ProfileView());
+    return;
+  }
+
+  setState(() => selectedIndex = index);
+
+  if (index == 1) {
+    controller.loadAttendanceHistory(range: 'month');
+  }
+}
+
+
+Future<void> _refreshCurrentPage() async {
     switch (selectedIndex) {
       case 0:
         await controller.refreshDashboard();
@@ -1225,171 +1238,7 @@ class _DashboardViewState extends State<DashboardView> {
     });
   }
 
-  Widget _buildProfile() {
-    return Obx(() {
-      final profile = controller.profile.value ?? {};
-      final user = _asMap(profile['user']).isNotEmpty
-          ? _asMap(profile['user'])
-          : profile;
 
-      final employee = _asMap(user['employee']);
-      final name = user['name']?.toString() ??
-          controller.user['name']?.toString() ??
-          'Employee';
-
-      if (controller.isProfileLoading.value && profile.isEmpty) {
-        return const Center(
-          child: CircularProgressIndicator(
-            color: AppTheme.mediumBlue,
-          ),
-        );
-      }
-
-      if (controller.profileError.value.isNotEmpty &&
-          profile.isEmpty) {
-        return _errorState(
-          message: controller.profileError.value,
-          onRetry: controller.loadProfile,
-        );
-      }
-
-      return RefreshIndicator(
-        onRefresh: controller.loadProfile,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            const Text(
-              'My profile',
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 7),
-            const Text(
-              'Your account information from the server.',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 25),
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: AppTheme.brandGradient,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Column(
-                children: [
-                  _avatar(name, 78, white: true),
-                  const SizedBox(height: 15),
-                  Text(
-                    name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    employee['designation']?.toString() ??
-                        'Employee',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                    ),
-                  ),
-                  if (employee['employee_code'] != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 13,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Text(
-                        employee['employee_code'].toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 22),
-            const _SectionHeading(
-              title: 'Personal information',
-              subtitle: 'Details associated with your account',
-              accent: AppTheme.cyan,
-            ),
-            const SizedBox(height: 13),
-            _surfaceCard(
-              child: Column(
-                children: [
-                  _profileRow(
-                    Icons.email_outlined,
-                    'Email',
-                    user['email'],
-                  ),
-                  _profileDivider(),
-                  _profileRow(
-                    Icons.phone_outlined,
-                    'Phone',
-                    user['phone'],
-                  ),
-                  _profileDivider(),
-                  _profileRow(
-                    Icons.business_outlined,
-                    'Department',
-                    employee['department'],
-                  ),
-                  _profileDivider(),
-                  _profileRow(
-                    Icons.badge_outlined,
-                    'Designation',
-                    employee['designation'],
-                  ),
-                  _profileDivider(),
-                  _profileRow(
-                    Icons.location_on_outlined,
-                    'Address',
-                    employee['address'],
-                  ),
-                  _profileDivider(),
-                  _profileRow(
-                    Icons.calendar_month_outlined,
-                    'Joining date',
-                    _formatDate(employee['joining_date']),
-                  ),
-                  _profileDivider(),
-                  _profileRow(
-                    Icons.verified_user_outlined,
-                    'Account status',
-                    user['active'] == true ? 'Active' : 'Check status',
-                  ),
-                ],
-              ),
-            ),
-            if (controller.profileError.value.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _inlineError(controller.profileError.value),
-            ],
-          ],
-        ),
-      );
-    });
-  }
 
   Widget _surfaceCard({required Widget child}) {
     return Container(
