@@ -89,45 +89,25 @@ class _SplashViewState extends State<SplashView>
     return Scaffold(
       backgroundColor: background,
       body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              top: -75,
-              right: -65,
-              child: _circle(
-                size: 190,
-                color: const Color(0x182BB6C6),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: 28,
+            vertical: compact ? 20 : 32,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const SizedBox(height: 8),
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: _buildHero(compact),
+                ),
               ),
-            ),
-            Positioned(
-              bottom: 65,
-              left: -90,
-              child: _circle(
-                size: 210,
-                color: const Color(0x151A5490),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 28,
-                vertical: compact ? 20 : 32,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const SizedBox(height: 8),
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _buildHero(compact),
-                    ),
-                  ),
-                  _buildFooter(),
-                ],
-              ),
-            ),
-          ],
+              _buildFooter(),
+            ],
+          ),
         ),
       ),
     );
@@ -286,20 +266,6 @@ class _SplashViewState extends State<SplashView>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _circle({
-    required double size,
-    required Color color,
-  }) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
     );
   }
 }
