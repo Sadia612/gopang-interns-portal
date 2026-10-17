@@ -1,12 +1,14 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/attendance_controller.dart';
 
+/// Screen responsible for displaying daily attendance status, available user actions,
+/// historical logs, and summary metrics.
 class AttendanceView extends GetView<AttendanceController> {
   const AttendanceView({super.key});
 
+  // UI Theme Colors
   static const Color _background = Color(0xFF09090B);
   static const Color _surface = Color(0xFF18181B);
   static const Color _border = Color(0xFF27272A);
@@ -28,13 +30,17 @@ class AttendanceView extends GetView<AttendanceController> {
         actions: [
           IconButton(
             tooltip: 'Refresh',
-            onPressed: () => controller.loadStatus(refresh: true),
+            onPressed: () {
+              debugPrint('Refreshing attendance status...');
+              controller.loadStatus(refresh: true);
+            },
             icon: const Icon(Icons.refresh_rounded),
           ),
           const SizedBox(width: 8),
         ],
       ),
       body: Obx(() {
+        // Initial Loading State
         if (controller.isLoading.value &&
             controller.statusData.value == null) {
           return const Center(
@@ -42,17 +48,23 @@ class AttendanceView extends GetView<AttendanceController> {
           );
         }
 
+        // Error State
         if (controller.statusData.value == null &&
             controller.errorMessage.value != null) {
           return _ErrorState(
             message: controller.errorMessage.value!,
-            onRetry: () => controller.loadStatus(),
+            onRetry: () {
+              debugPrint('Retrying status load...');
+              controller.loadStatus();
+            },
           );
         }
 
+        // Main Attendance Screen Layout
         return RefreshIndicator(
           color: _primary,
           onRefresh: () async {
+            debugPrint('Pull-to-refresh triggered');
             await controller.loadStatus(refresh: true);
             await controller.loadHistory(page: 1);
           },
@@ -78,6 +90,7 @@ class AttendanceView extends GetView<AttendanceController> {
     );
   }
 
+  /// Displays screen title and current date header.
   Widget _header() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,6 +112,7 @@ class AttendanceView extends GetView<AttendanceController> {
     );
   }
 
+  /// Displays today's attendance status, progress bar, worked time, and check-in/out times.
   Widget _todayCard() {
     return Obx(() {
       final today = controller.today;
@@ -221,6 +235,7 @@ class AttendanceView extends GetView<AttendanceController> {
     });
   }
 
+  /// Displays interactive action buttons for checking in, taking breaks, and checking out.
   Widget _actionCard() {
     return Obx(() {
       final checkedIn = controller.checkedIn;
@@ -252,7 +267,10 @@ class AttendanceView extends GetView<AttendanceController> {
                 icon: Icons.login_rounded,
                 enabled: !busy,
                 loading: busy,
-                onPressed: controller.checkIn,
+                onPressed: () {
+                  debugPrint('User initiated Check-In');
+                  controller.checkIn();
+                },
               )
             else if (!checkedOut) ...[
               _ActionButton(
@@ -270,7 +288,10 @@ class AttendanceView extends GetView<AttendanceController> {
                   icon: Icons.play_arrow_rounded,
                   enabled: !busy,
                   loading: busy,
-                  onPressed: controller.endBreak,
+                  onPressed: () {
+                    debugPrint('User initiated Resume Work');
+                    controller.endBreak();
+                  },
                 )
               else ...[
                 _ActionButton(
@@ -278,7 +299,10 @@ class AttendanceView extends GetView<AttendanceController> {
                   icon: Icons.coffee_rounded,
                   enabled: !busy,
                   loading: busy,
-                  onPressed: controller.startBreak,
+                  onPressed: () {
+                    debugPrint('User initiated Start Break');
+                    controller.startBreak();
+                  },
                   outlined: true,
                 ),
                 const SizedBox(height: 10),
@@ -287,7 +311,10 @@ class AttendanceView extends GetView<AttendanceController> {
                   icon: Icons.logout_rounded,
                   enabled: !busy,
                   loading: busy,
-                  onPressed: controller.checkOut,
+                  onPressed: () {
+                    debugPrint('User initiated Check-Out');
+                    controller.checkOut();
+                  },
                   outlined: true,
                 ),
               ],
@@ -314,6 +341,7 @@ class AttendanceView extends GetView<AttendanceController> {
     });
   }
 
+  /// Title section for history logs.
   Widget _historyHeader() {
     return const Text(
       'Attendance history',
@@ -325,6 +353,7 @@ class AttendanceView extends GetView<AttendanceController> {
     );
   }
 
+  /// Dropdown filter controls for date ranges and status categories.
   Widget _historyFilters() {
     return Obx(() {
       return Row(
@@ -338,7 +367,10 @@ class AttendanceView extends GetView<AttendanceController> {
                 'all': 'All records',
               },
               onChanged: (value) {
-                if (value != null) controller.changeRange(value);
+                if (value != null) {
+                  debugPrint('Date range filter changed to: $value');
+                  controller.changeRange(value);
+                }
               },
             ),
           ),
@@ -353,7 +385,10 @@ class AttendanceView extends GetView<AttendanceController> {
                 'incomplete': 'Incomplete',
               },
               onChanged: (value) {
-                if (value != null) controller.changeStatus(value);
+                if (value != null) {
+                  debugPrint('Status filter changed to: $value');
+                  controller.changeStatus(value);
+                }
               },
             ),
           ),
@@ -362,6 +397,7 @@ class AttendanceView extends GetView<AttendanceController> {
     });
   }
 
+  /// History list section presenting daily records, pagination, and period summaries.
   Widget _historySection() {
     return Obx(() {
       if (controller.isHistoryLoading.value &&
@@ -377,7 +413,10 @@ class AttendanceView extends GetView<AttendanceController> {
           controller.historyData.value == null) {
         return _ErrorState(
           message: controller.historyError.value!,
-          onRetry: () => controller.loadHistory(),
+          onRetry: () {
+            debugPrint('Retrying history load...');
+            controller.loadHistory();
+          },
         );
       }
 
@@ -429,6 +468,7 @@ class AttendanceView extends GetView<AttendanceController> {
     });
   }
 
+  /// Individual attendance record card.
   Widget _historyItem(Map<String, dynamic> item) {
     final status = item['status']?.toString() ?? 'unknown';
     final date = _formatDate(item['work_date']);
@@ -485,6 +525,7 @@ class AttendanceView extends GetView<AttendanceController> {
     );
   }
 
+  /// Pagination controls for browsing history pages.
   Widget _pagination() {
     return Obx(() {
       final page = controller.attendancePage;
@@ -500,7 +541,10 @@ class AttendanceView extends GetView<AttendanceController> {
         children: [
           IconButton(
             onPressed: hasPrevious && !controller.isHistoryLoading.value
-                ? controller.previousPage
+                ? () {
+              debugPrint('Navigating to previous page');
+              controller.previousPage();
+            }
                 : null,
             icon: const Icon(Icons.chevron_left_rounded),
             color: Colors.white,
@@ -514,7 +558,10 @@ class AttendanceView extends GetView<AttendanceController> {
           ),
           IconButton(
             onPressed: hasNext && !controller.isHistoryLoading.value
-                ? controller.nextPage
+                ? () {
+              debugPrint('Navigating to next page');
+              controller.nextPage();
+            }
                 : null,
             icon: const Icon(Icons.chevron_right_rounded),
             color: Colors.white,
@@ -524,6 +571,7 @@ class AttendanceView extends GetView<AttendanceController> {
     });
   }
 
+  /// Displays aggregated weekly and monthly statistics.
   Widget _summarySection() {
     return Obx(() {
       final data = controller.summary;
@@ -614,6 +662,7 @@ class AttendanceView extends GetView<AttendanceController> {
     });
   }
 
+  /// Helper to format and retrieve today's date string.
   String _currentDate() {
     final now = DateTime.now();
     const months = [
@@ -625,6 +674,7 @@ class AttendanceView extends GetView<AttendanceController> {
     return '${now.day} ${months[now.month - 1]} ${now.year}';
   }
 
+  /// Formats raw timestamp strings into standard 12-hour local time format.
   String _formatDateTime(dynamic value) {
     if (value is! String || value.isEmpty) return '—';
 
@@ -639,6 +689,7 @@ class AttendanceView extends GetView<AttendanceController> {
     return '$hour:$minute $period';
   }
 
+  /// Formats raw date strings into standard DD/MM/YYYY local date format.
   String _formatDate(dynamic value) {
     if (value is! String || value.isEmpty) return 'Date unavailable';
 
@@ -650,6 +701,7 @@ class AttendanceView extends GetView<AttendanceController> {
   }
 }
 
+/// Styled container panel wrapper.
 class _Panel extends StatelessWidget {
   final Widget child;
 
@@ -669,6 +721,7 @@ class _Panel extends StatelessWidget {
   }
 }
 
+/// Metric key-value text pairing display.
 class _Metric extends StatelessWidget {
   final String label;
   final String value;
@@ -707,6 +760,7 @@ class _Metric extends StatelessWidget {
   }
 }
 
+/// Visual status badge indicator chip.
 class _StatusBadge extends StatelessWidget {
   final String status;
 
@@ -743,6 +797,7 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
+/// Reusable action button supporting active, loading, disabled, and outlined variants.
 class _ActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -806,6 +861,7 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
+/// Styled filter dropdown menu component.
 class _Dropdown extends StatelessWidget {
   final String value;
   final Map<String, String> items;
@@ -850,6 +906,7 @@ class _Dropdown extends StatelessWidget {
   }
 }
 
+/// Error state component displaying retry controls.
 class _ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;

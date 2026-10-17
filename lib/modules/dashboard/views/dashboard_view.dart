@@ -9,6 +9,10 @@ import '../../../core/theme/app_theme.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../../app/app_routes.dart';
 import '../../profile/views/profile_view.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../notifications/views/notifications_view.dart';
+import '../../../core/theme/theme_controller.dart';
+import '../../tasks/views/tasks_view.dart';
 
 class DashboardView extends StatefulWidget {
 const DashboardView({super.key});
@@ -23,10 +27,11 @@ final DashboardController controller = Get.put(DashboardController());
 int selectedIndex = 0;
 
 final List<String> titles = const [
-'Home',
-'Attendance',
-'Reports',
-'Profile',
+  'Home',
+  'Attendance',
+  'Tasks',
+  'Reports',
+  'Profile',
 ];
 
 @override
@@ -103,7 +108,7 @@ actions: const [],
     children: [
       _buildHome(),
       _buildAttendance(),
-      _buildReports(),
+      const TasksView(),
     ],
   ),
 
@@ -139,11 +144,17 @@ icon: Icon(Icons.home_outlined),
 selectedIcon: Icon(Icons.home_rounded),
 label: 'Home',
 ),
-NavigationDestination(
-                icon: Icon(Icons.access_time_outlined),
-                selectedIcon: Icon(Icons.access_time_filled_rounded),
-                label: 'Attendance',
-              ),
+  NavigationDestination(
+    icon: Icon(Icons.access_time_outlined),
+    selectedIcon: Icon(Icons.access_time_filled_rounded),
+    label: 'Attendance',
+  ),
+  NavigationDestination(
+    icon: Icon(Icons.task_outlined),
+    selectedIcon: Icon(Icons.task_rounded),
+    label: 'Tasks',
+  ),
+
               NavigationDestination(
                 icon: Icon(Icons.description_outlined),
                 selectedIcon: Icon(Icons.description_rounded),
@@ -162,44 +173,37 @@ NavigationDestination(
   }
 
 
-
-
 void _selectTab(int index) {
-  if (index == 2) {
+  if (index == 3) {
     Get.toNamed(AppRoutes.reports);
     return;
   }
 
-  if (index == 3) {
+  if (index == 4) {
     Get.to(() => const ProfileView());
     return;
   }
 
-  setState(() => selectedIndex = index);
+  setState(() {
+    selectedIndex = index;
+  });
 
   if (index == 1) {
     controller.loadAttendanceHistory(range: 'month');
   }
-}
-
-
-Future<void> _refreshCurrentPage() async {
-    switch (selectedIndex) {
-      case 0:
-        await controller.refreshDashboard();
-        break;
-      case 1:
-        await controller.loadAttendanceHistory(range: 'month');
-        break;
-      case 2:
-        await controller.loadReports();
-        break;
-      case 3:
-        await controller.loadProfile();
-        break;
-    }
+}Future<void> _refreshCurrentPage() async {
+  switch (selectedIndex) {
+    case 0:
+      await controller.refreshDashboard();
+      break;
+    case 1:
+      await controller.loadAttendanceHistory(range: 'month');
+      break;
+    case 2:
+  // TasksView` handles its own API refresh.
+      break;
   }
-
+}
   Widget _buildDrawer(BuildContext context) {
     return Drawer(
       backgroundColor: AppTheme.surface,
@@ -308,7 +312,7 @@ Future<void> _refreshCurrentPage() async {
               onTap: () {
                 Navigator.pop(context);
                 Get.to(
-                      () => const _NotificationsPage(),
+                    const NotificationsView(),
                   binding: BindingsBuilder(() {
                     Get.lazyPut<DashboardController>(
                           () => controller,
@@ -317,28 +321,43 @@ Future<void> _refreshCurrentPage() async {
                 );
               },
             ),
-            _drawerItem(
-              icon: Icons.settings_outlined,
-              title: 'Settings',
-              onTap: () {
-                Navigator.pop(context);
-                Get.to(
-                      () => _SettingsPage(controller: controller),
-                );
-              },
-            ),
+
             const Spacer(),
             const Divider(color: AppTheme.border),
+
             _drawerItem(
               icon: Icons.logout_rounded,
-              title: 'Logout',
+              title: 'Sign Out',
               iconColor: AppTheme.error,
               onTap: () {
-                Navigator.pop(context);
-                Get.snackbar(
-                  'Logout',
-                  'Logout still needs to be connected to the server API through the AuthController.',
-                  snackPosition: SnackPosition.BOTTOM,
+                Get.dialog<void>(
+                  AlertDialog(
+                    title: const Text('Sign Out'),
+                    content: const Text(
+                      'Are you sure you want to sign out of your account?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Get.back<void>();
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          Get.back<void>();
+
+                          final controller =
+                          Get.isRegistered<AuthController>()
+                              ? Get.find<AuthController>()
+                              : Get.put(AuthController());
+
+                          await controller.logout();
+                        },
+                        child: const Text('Sign Out'),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -363,7 +382,7 @@ Future<void> _refreshCurrentPage() async {
           borderRadius: BorderRadius.circular(13),
         ),
         selected: selected,
-        selectedTileColor: AppTheme.blueLight,
+        selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
         leading: Icon(
           icon,
           color: iconColor ??
@@ -417,7 +436,9 @@ Future<void> _refreshCurrentPage() async {
 
       final user = controller.user;
       final employee = controller.employee;
-      final today = controller.today;
+      final today = controller.
+
+      today;
       final week = controller.week;
       final month = controller.month;
 
@@ -1921,228 +1942,4 @@ class _SectionHeading extends StatelessWidget {
   }
 }
 
-class _SettingsPage extends StatelessWidget {
-  const _SettingsPage({required this.controller});
 
-  final DashboardController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const Text(
-            'Preferences',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 15),
-          Card(
-            color: AppTheme.surface,
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(
-                    Icons.notifications_outlined,
-                    color: AppTheme.mediumBlue,
-                  ),
-                  title: const Text('Notification settings'),
-                  subtitle: const Text(
-                    'View notifications from the company server',
-                  ),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () {
-                    Get.to(
-                          () => const _NotificationsPage(),
-                    );
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.person_outline_rounded,
-                    color: AppTheme.mediumBlue,
-                  ),
-                  title: const Text('My profile'),
-                  subtitle: const Text(
-                    'View your account details',
-                  ),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: controller.loadProfile,
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.palette_outlined,
-                    color: AppTheme.mediumBlue,
-                  ),
-                  title: const Text('App appearance'),
-                  subtitle: const Text(
-                    'Theme switching needs app-wide theme persistence',
-                  ),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () {
-                    Get.snackbar(
-                      'Theme settings',
-                      'The global light/dark theme controller is not configured yet.',
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.logout_rounded,
-                    color: AppTheme.error,
-                  ),
-                  title: const Text('Logout'),
-                  subtitle: const Text('Sign out of your account'),
-                  onTap: () {
-                    Get.snackbar(
-                      'Logout',
-                      'Server logout needs to be connected to AuthController.',
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NotificationsPage extends StatelessWidget {
-  const _NotificationsPage();
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<DashboardController>();
-
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        actions: [
-          TextButton(
-            onPressed: controller.markAllNotificationsRead,
-            child: const Text('Read all'),
-          ),
-        ],
-      ),
-      body: Obx(() {
-        if (controller.isNotificationsLoading.value &&
-            controller.notifications.isEmpty) {
-          return const Center(
-            child: CircularProgressIndicator(
-              color: AppTheme.mediumBlue,
-            ),
-          );
-        }
-
-        if (controller.notificationsError.value.isNotEmpty &&
-            controller.notifications.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                controller.notificationsError.value,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
-        }
-
-        if (controller.notifications.isEmpty) {
-          return const Center(
-            child: Text('No notifications returned by the server.'),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: controller.loadNotifications,
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: controller.notifications.length,
-            separatorBuilder: (_, _) =>
-            const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final item = controller.notifications[index];
-              final notification = item is Map
-                  ? Map<String, dynamic>.from(item)
-                  : <String, dynamic>{};
-
-              final id = notification['id'];
-              final title =
-                  notification['title']?.toString() ?? 'Notification';
-              final message =
-                  notification['message']?.toString() ?? '';
-              final read = notification['read_at'] != null;
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(17),
-                  border: Border.all(color: AppTheme.border),
-                ),
-                child: ListTile(
-                  leading: Icon(
-                    read
-                        ? Icons.notifications_none_rounded
-                        : Icons.notifications_active_rounded,
-                    color: read
-                        ? AppTheme.textMuted
-                        : AppTheme.mediumBlue,
-                  ),
-                  title: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 5),
-                    child: Text(
-                      message,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                  ),
-                  trailing: read
-                      ? const Icon(
-                    Icons.check_circle_outline_rounded,
-                    color: AppTheme.success,
-                    size: 20,
-                  )
-                      : IconButton(
-                    tooltip: 'Mark as read',
-                    onPressed: id is num
-                        ? () => controller.markNotificationRead(
-                      id.toInt(),
-                    )
-                        : null,
-                    icon: const Icon(
-                      Icons.mark_email_read_outlined,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      }),
-    );
-  }
-}

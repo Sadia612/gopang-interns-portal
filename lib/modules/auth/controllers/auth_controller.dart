@@ -1,25 +1,30 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../services/auth_service.dart';
 import '../../../app/app_routes.dart';
 
+/// GetX Controller managing user authentication state, sign-in, and sign-out flows.
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
 
+  // Observable state flags
   final isLoading = false.obs;
+  final isLoggingOut = false.obs;
   final loggedInUser = Rxn<Map<String, dynamic>>();
 
+  /// Handles user sign-in validation, request execution, and route navigation.
   Future<void> login({
     required String email,
     required String password,
     required GlobalKey<FormState> formKey,
   }) async {
-    if (isLoading.value) return;
+    if (isLoading.value || isLoggingOut.value) return;
 
+    // Dismiss active keyboard input
     FocusManager.instance.primaryFocus?.unfocus();
 
+    // Validate form inputs before proceeding
     if (!(formKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -38,15 +43,14 @@ class AuthController extends GetxController {
         await _authService.clearSession();
 
         throw const AuthException(
-          'User information was not found in the login response.',
+          'Unable to sign in. Please try again.',
         );
       }
 
-      // Save actual user information from the API response.
       loggedInUser.value = user;
 
       Get.snackbar(
-        'Login successful',
+        'Welcome',
         'Welcome back${user['name'] is String ? ', ${user['name']}' : ''}.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFDCFCE7),
@@ -54,11 +58,11 @@ class AuthController extends GetxController {
         margin: const EdgeInsets.all(16),
       );
 
-      // Open dashboard and remove login screen from the route stack.
+      // Navigate to main application dashboard
       Get.offAllNamed(AppRoutes.dashboard);
     } on AuthException catch (error) {
       Get.snackbar(
-        'Sign in failed',
+        'Sign In Failed',
         error.message,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFFEE2E2),
@@ -67,7 +71,7 @@ class AuthController extends GetxController {
       );
     } catch (_) {
       Get.snackbar(
-        'Unexpected Error',
+        'Unable to Sign In',
         'Something went wrong. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFFEE2E2),
@@ -79,11 +83,54 @@ class AuthController extends GetxController {
     }
   }
 
+  /// Handles user sign-out, session cleanup, and redirection to the login view.
   Future<void> logout() async {
-    await _authService.clearSession();
+    if (isLoggingOut.value) return;
+
+    isLoggingOut.value = true;
+
+    String? errorMessage;
+
+    try {
+      await _authService.logout();
+    } on AuthException catch (error) {
+      errorMessage = error.message;
+    } catch (_) {
+      errorMessage = 'Unable to complete sign out. Please try again.';
+    }
+
+    try {
+      await _authService.clearSession();
+    } catch (_) {
+      errorMessage = 'Unable to clear your session. Please try again.';
+    }
 
     loggedInUser.value = null;
+    isLoading.value = false;
 
-    Get.offAllNamed(AppRoutes.login);
+    try {
+      // Redirect user back to the authentication screen
+      await Get.offAllNamed(AppRoutes.login);
+
+      if (errorMessage != null) {
+        Get.snackbar(
+          'Sign Out',
+          errorMessage,
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 4),
+          margin: const EdgeInsets.all(16),
+        );
+      } else {
+        Get.snackbar(
+          'Signed Out',
+          'You have successfully signed out.',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 3),
+          margin: const EdgeInsets.all(16),
+        );
+      }
+    } finally {
+      isLoggingOut.value = false;
+    }
   }
 }

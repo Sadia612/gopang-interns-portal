@@ -1,7 +1,7 @@
-
 import 'package:get/get.dart';
 
 import '../services/attendance_service.dart';
+import '../../notifications/controllers/notifications_controller.dart';
 
 /// GetX Controller for managing attendance status, history, and actions.
 class AttendanceController extends GetxController {
@@ -13,7 +13,7 @@ class AttendanceController extends GetxController {
   final isActionLoading = false.obs;
   final isHistoryLoading = false.obs;
 
-  // Observable API response data holders
+  // Observable state response data holders
   final statusData = Rxn<Map<String, dynamic>>();
   final historyData = Rxn<Map<String, dynamic>>();
 
@@ -210,6 +210,7 @@ class AttendanceController extends GetxController {
     await _performAction(
       action: _service.checkIn,
       successMessage: 'Check-in successful.',
+      onSuccess: _addCheckInNotification,
     );
   }
 
@@ -240,6 +241,14 @@ class AttendanceController extends GetxController {
     await _performAction(
       action: _service.startBreak,
       successMessage: 'Break started successfully.',
+      onSuccess: () async {
+        final controller = Get.isRegistered<NotificationsController>()
+            ? Get.find<NotificationsController>()
+            : Get.put(NotificationsController());
+
+        await controller.loadNotifications();
+        await controller.refreshNotifications();
+      },
     );
   }
 
@@ -250,13 +259,74 @@ class AttendanceController extends GetxController {
     await _performAction(
       action: _service.endBreak,
       successMessage: 'Break ended successfully.',
+      onSuccess: () async {
+        final controller = Get.isRegistered<NotificationsController>()
+            ? Get.find<NotificationsController>()
+            : Get.put(NotificationsController());
+
+        await controller.loadNotifications();
+        await controller.refreshNotifications();
+      },
     );
   }
 
-  /// Helper method to execute attendance action endpoints and refresh data.
+  /// Triggers notification refresh after check-in.
+  Future<void> _addCheckInNotification() async {
+    final attendanceRecord = record;
+    final todayData = today;
+
+    final recordStatus =
+    attendanceRecord?['status']?.toString().toLowerCase();
+
+    final late = attendanceRecord?['is_late'] == true ||
+        todayData?['is_late'] == true ||
+        recordStatus == 'late';
+
+    final lateMinutes = _intValue(
+      attendanceRecord?['late_minutes'],
+    ) ??
+        _intValue(todayData?['late_minutes']) ??
+        0;
+
+    final rawCheckInTime = attendanceRecord?['check_in'] ??
+        attendanceRecord?['check_in_time'] ??
+        todayData?['check_in'];
+
+    final checkInTime = _formatNotificationTime(rawCheckInTime);
+
+    final notificationsController =
+    Get.isRegistered<NotificationsController>()
+        ? Get.find<NotificationsController>()
+        : Get.put(NotificationsController());
+
+    await notificationsController.loadNotifications();
+    await notificationsController.refreshNotifications();
+  }
+
+  /// Formats raw time string into a 12-hour display string.
+  String _formatNotificationTime(dynamic value) {
+    if (value == null || value.toString().trim().isEmpty) {
+      return 'Time unavailable';
+    }
+
+    final rawValue = value.toString();
+    final parsed = DateTime.tryParse(rawValue);
+
+    if (parsed == null) return rawValue;
+
+    final time = parsed.toLocal();
+    final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+
+    return '$hour:$minute $period';
+  }
+
+  /// Helper method to execute attendance action calls and refresh state.
   Future<void> _performAction({
     required Future<Map<String, dynamic>> Function() action,
     required String successMessage,
+    Future<void> Function()? onSuccess,
   }) async {
     if (isActionLoading.value) return;
 
@@ -275,6 +345,10 @@ class AttendanceController extends GetxController {
         loadStatus(),
         loadHistory(page: 1),
       ]);
+
+      if (onSuccess != null) {
+        await onSuccess();
+      }
     } on AttendanceException catch (error) {
       Get.snackbar(
         'Action Failed',

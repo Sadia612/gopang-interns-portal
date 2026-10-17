@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import '../../../app/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -27,13 +28,31 @@ class _SplashViewState extends State<SplashView> {
       }
     });
 
-    Future.delayed(const Duration(milliseconds: 2400), () {
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    await Future.delayed(const Duration(milliseconds: 2400));
+
+    if (!mounted) return;
+
+    try {
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'auth_token');
+
+      if (!mounted) return;
+
+      if (token != null && token.trim().isNotEmpty) {
+        Get.offAllNamed(AppRoutes.dashboard);
+      } else {
+        Get.offAllNamed(AppRoutes.login);
+      }
+    } catch (_) {
       if (mounted) {
         Get.offAllNamed(AppRoutes.login);
       }
-    });
+    }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

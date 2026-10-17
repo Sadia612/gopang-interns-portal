@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
-/// Custom exception class for attendance API and service errors.
+/// Custom exception class thrown during attendance service operations and network failures.
 class AttendanceException implements Exception {
   final String message;
 
@@ -15,7 +15,7 @@ class AttendanceException implements Exception {
   String toString() => message;
 }
 
-/// Service handling API calls related to employee attendance.
+/// Service class handling network communications and data processing for employee attendance.
 class AttendanceService {
   static const String _baseUrl = 'https://portal.gopangitsolution.com';
 
@@ -23,7 +23,7 @@ class AttendanceService {
 
   static const Duration _timeout = Duration(seconds: 20);
 
-  /// Fetches the current attendance status of the user.
+  /// Fetches the current attendance status of the authenticated user.
   Future<Map<String, dynamic>> getStatus() {
     return _request(
       method: 'GET',
@@ -31,7 +31,7 @@ class AttendanceService {
     );
   }
 
-  /// Retrieves historical attendance records based on filters.
+  /// Retrieves historical attendance logs based on applied date range, page, and status filters.
   Future<Map<String, dynamic>> getHistory({
     String range = 'month',
     String? from,
@@ -63,7 +63,7 @@ class AttendanceService {
     );
   }
 
-  /// Sends a check-in request.
+  /// Submits a check-in request for the user.
   Future<Map<String, dynamic>> checkIn() {
     return _request(
       method: 'POST',
@@ -71,7 +71,7 @@ class AttendanceService {
     );
   }
 
-  /// Sends a check-out request.
+  /// Submits a check-out request for the user.
   Future<Map<String, dynamic>> checkOut() {
     return _request(
       method: 'POST',
@@ -79,7 +79,7 @@ class AttendanceService {
     );
   }
 
-  /// Sends a request to start a break.
+  /// Submits a request to start a break session.
   Future<Map<String, dynamic>> startBreak() {
     return _request(
       method: 'POST',
@@ -87,7 +87,7 @@ class AttendanceService {
     );
   }
 
-  /// Sends a request to end a break.
+  /// Submits a request to end an ongoing break session.
   Future<Map<String, dynamic>> endBreak() {
     return _request(
       method: 'POST',
@@ -95,13 +95,13 @@ class AttendanceService {
     );
   }
 
-  /// Helper method to perform HTTP requests with authentication headers and error handling.
+  /// Helper method handling secure token retrieval, network execution, and response parsing.
   Future<Map<String, dynamic>> _request({
     required String method,
     required String path,
     Map<String, String>? query,
   }) async {
-    // Retrieve authentication token from secure storage
+    // Read secure authorization token
     final token = await _storage.read(key: 'auth_token');
 
     if (token == null || token.trim().isEmpty) {
@@ -122,7 +122,7 @@ class AttendanceService {
     try {
       late http.Response response;
 
-      // Execute network request based on HTTP method
+      // Dispatch request based on specified method
       switch (method) {
         case 'GET':
           response = await http.get(uri, headers: headers).timeout(_timeout);
@@ -155,7 +155,7 @@ class AttendanceService {
         );
       }
 
-      // Handle non-2xx HTTP status codes or API failure flags
+      // Check HTTP status code and response flags
       if (response.statusCode < 200 ||
           response.statusCode >= 300 ||
           decoded['ok'] != true) {

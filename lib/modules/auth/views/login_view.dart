@@ -1,10 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../controllers/auth_controller.dart';
 
+/// Screen widget providing the user authentication login form interface.
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
@@ -28,6 +28,7 @@ class _LoginViewState extends State<LoginView> {
     super.dispose();
   }
 
+  /// Triggers user sign-in process via the authentication controller.
   Future<void> _handleSignIn() async {
     await _authController.login(
       email: _emailController.text,
@@ -203,8 +204,7 @@ class _LoginViewState extends State<LoginView> {
                                   () => SizedBox(
                                 height: 54,
                                 child: FilledButton(
-                                  onPressed:
-                                  _authController.isLoading.value
+                                  onPressed: _authController.isLoading.value
                                       ? null
                                       : _handleSignIn,
                                   style: FilledButton.styleFrom(
@@ -286,6 +286,7 @@ class _LoginViewState extends State<LoginView> {
   }
 }
 
+/// Helper label widget for form input field headers.
 class _FieldLabel extends StatelessWidget {
   final String text;
 
