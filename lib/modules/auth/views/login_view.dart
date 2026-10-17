@@ -115,7 +115,7 @@ class _LoginViewState extends State<LoginView> {
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              'Sign in to access your internship workspace.',
+                              'Sign in to access your Employee workspace.',
                               style: TextStyle(
                                 color: AppTheme.textSecondary,
                                 fontSize: 14,
@@ -266,7 +266,7 @@ class _LoginViewState extends State<LoginView> {
                       SizedBox(width: 7),
                       Flexible(
                         child: Text(
-                          'Gopang IT Solutions · Intern Access',
+                          'Gopang IT Solutions · Employee Access',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppTheme.textMuted,

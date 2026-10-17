@@ -1,12 +1,8 @@
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-
-import '../../../app/app_routes.dart';
-import '../../../core/theme/app_theme.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get/get.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -15,329 +11,294 @@ class SplashView extends StatefulWidget {
   State<SplashView> createState() => _SplashViewState();
 }
 
-class _SplashViewState extends State<SplashView> {
-  bool _visible = false;
+class _SplashViewState extends State<SplashView>
+    with SingleTickerProviderStateMixin {
+  static const Color primaryBlue = Color(0xFF1A5490);
+  static const Color mediumBlue = Color(0xFF178FB4);
+  static const Color cyan = Color(0xFF2BB6C6);
+  static const Color background = Color(0xFFF5F8FC);
+  static const Color mutedText = Color(0xFF71839A);
+
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  late final AnimationController _animationController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() => _visible = true);
-      }
-    });
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
 
-    _checkSession();
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _animationController.forward();
+    _navigateNext();
   }
 
-  Future<void> _checkSession() async {
-    await Future.delayed(const Duration(milliseconds: 2400));
+  Future<void> _navigateNext() async {
+    await Future.delayed(const Duration(seconds: 3));
 
     if (!mounted) return;
 
+    String? token;
+
     try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'auth_token');
-
-      if (!mounted) return;
-
-      if (token != null && token.trim().isNotEmpty) {
-        Get.offAllNamed(AppRoutes.dashboard);
-      } else {
-        Get.offAllNamed(AppRoutes.login);
-      }
+      token = await _storage.read(key: 'auth_token');
     } catch (_) {
-      if (mounted) {
-        Get.offAllNamed(AppRoutes.login);
-      }
+      token = null;
+    }
+
+    if (!mounted) return;
+
+    if (token != null && token.trim().isNotEmpty) {
+      Get.offAllNamed('/dashboard');
+    } else {
+      Get.offAllNamed('/login');
     }
   }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final compact = size.height < 700;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFBFF),
-      body: Stack(
-        children: [
-          // Soft background accents
-          Positioned(
-            top: -100,
-            right: -90,
-            child: _circle(260, const Color(0xFFF0EAFF)),
-          ),
-          Positioned(
-            bottom: -120,
-            left: -100,
-            child: _circle(260, const Color(0xFFF3EFFF)),
-          ),
-
-          SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final height = MediaQuery.sizeOf(context).height;
-                final compact = height < 700;
-
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Brand header
-                          Padding(
-                            padding: const EdgeInsets.only(top: 22),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 42,
-                                  height: 42,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primary,
-                                    borderRadius: BorderRadius.circular(14),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppTheme.primary.withValues(
-                                          alpha: 0.20,
-                                        ),
-                                        blurRadius: 14,
-                                        offset: const Offset(0, 5),
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.workspaces_rounded,
-                                    color: Colors.white,
-                                    size: 23,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'GOPANG',
-                                      style: TextStyle(
-                                        color: AppTheme.textPrimary,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 1.3,
-                                      ),
-                                    ),
-                                    SizedBox(height: 3),
-                                    Text(
-                                      'IT SOLUTION',
-                                      style: TextStyle(
-                                        color: AppTheme.textSecondary,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 1.8,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Main hero section
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: compact ? 42 : 64,
-                            ),
-                            child: AnimatedOpacity(
-                              opacity: _visible ? 1 : 0,
-                              duration: const Duration(milliseconds: 700),
-                              curve: Curves.easeOut,
-                              child: AnimatedSlide(
-                                offset: _visible
-                                    ? Offset.zero
-                                    : const Offset(0, 0.07),
-                                duration: const Duration(milliseconds: 700),
-                                curve: Curves.easeOutCubic,
-                                child: Column(
-                                  children: [
-                                    // Layered app icon
-                                    Container(
-                                      width: 154,
-                                      height: 154,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF0EAFF),
-                                        borderRadius: BorderRadius.circular(46),
-                                      ),
-                                      child: Center(
-                                        child: Container(
-                                          width: 106,
-                                          height: 106,
-                                          decoration: BoxDecoration(
-                                            gradient: const LinearGradient(
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                              colors: [
-                                                Color(0xFFA78BFA),
-                                                Color(0xFF7652E8),
-                                                Color(0xFF5B3CC4),
-                                              ],
-                                            ),
-                                            borderRadius:
-                                            BorderRadius.circular(32),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: AppTheme.primary
-                                                    .withValues(alpha: 0.22),
-                                                blurRadius: 24,
-                                                offset: const Offset(0, 10),
-                                              ),
-                                            ],
-                                          ),
-                                          child: const Icon(
-                                            Icons.dashboard_rounded,
-                                            size: 47,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    SizedBox(height: compact ? 32 : 42),
-
-                                    const Text(
-                                      'Gopang Interns',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 32,
-                                        height: 1.2,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: -1.1,
-                                        color: AppTheme.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    const Text(
-                                      'PORTAL',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: AppTheme.primary,
-                                        fontSize: 27,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 3.5,
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 17),
-
-                                    const Padding(
-                                      padding:
-                                      EdgeInsets.symmetric(horizontal: 8),
-                                      child: Text(
-                                        'Your attendance. Your daily work. '
-                                            'Your progress.',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: AppTheme.textSecondary,
-                                          fontSize: 14,
-                                          height: 1.7,
-                                        ),
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 25),
-
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 15,
-                                        vertical: 10,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(30),
-                                        border: Border.all(
-                                          color: AppTheme.border,
-                                        ),
-                                      ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.verified_user_outlined,
-                                            size: 16,
-                                            color: AppTheme.primary,
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'Your professional workspace',
-                                            style: TextStyle(
-                                              color: AppTheme.textSecondary,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Minimal footer
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24, top: 8),
-                            child: Column(
-                              children: [
-                                SizedBox(
-                                  width: 36,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: const LinearProgressIndicator(
-                                      minHeight: 3,
-                                      backgroundColor: Color(0xFFE8E0FF),
-                                      valueColor:
-                                      AlwaysStoppedAnimation<Color>(
-                                        AppTheme.primary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 15),
-                                const Text(
-                                  'GOPANG IT SOLUTION',
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 1.6,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+      backgroundColor: background,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Positioned(
+              top: -75,
+              right: -65,
+              child: _circle(
+                size: 190,
+                color: const Color(0x182BB6C6),
+              ),
+            ),
+            Positioned(
+              bottom: 65,
+              left: -90,
+              child: _circle(
+                size: 210,
+                color: const Color(0x151A5490),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 28,
+                vertical: compact ? 20 : 32,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(height: 8),
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: _buildHero(compact),
                     ),
                   ),
-                );
-              },
+                  _buildFooter(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _circle(double size, Color color) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color,
+  Widget _buildHero(bool compact) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: compact ? 104 : 122,
+          height: compact ? 104 : 122,
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: primaryBlue.withValues(alpha: 0.12),
+                blurRadius: 35,
+                offset: const Offset(0, 15),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(23),
+            child: _companyLogo(),
+          ),
         ),
+        const SizedBox(height: 30),
+        const Text(
+          'WorkHub',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: primaryBlue,
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -1.2,
+          ),
+        ),
+        const SizedBox(height: 9),
+        const Text(
+          'All work in one place',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: mutedText,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 28),
+        Container(
+          width: 58,
+          height: 4,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            gradient: const LinearGradient(
+              colors: [mediumBlue, cyan],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Your workplace, simplified.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color(0xFF52667D),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _companyLogo() {
+    return Image.asset(
+      'assets/images/gopang_logo.png',
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(23),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [primaryBlue, mediumBlue, cyan],
+            ),
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.work_rounded,
+              size: 53,
+              color: Colors.white,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFooter() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: const BoxDecoration(
+                color: cyan,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 9),
+            const Text(
+              'GOPANG IT SOLUTION',
+              style: TextStyle(
+                color: primaryBlue,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        const Text(
+          'Preparing your workspace...',
+          style: TextStyle(
+            color: mutedText,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 18),
+        const SizedBox(
+          width: 25,
+          height: 25,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            color: mediumBlue,
+            backgroundColor: Color(0xFFE2EDF5),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'VERSION 1.0.0',
+          style: TextStyle(
+            color: Color(0xFF9AA9B9),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _circle({
+    required double size,
+    required Color color,
+  }) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
       ),
     );
   }

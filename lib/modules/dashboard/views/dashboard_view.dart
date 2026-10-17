@@ -111,50 +111,76 @@ actions: const [],
       const TasksView(),
     ],
   ),
-
-bottomNavigationBar: Container(
-decoration: BoxDecoration(
-color: AppTheme.surface,
-border: const Border(
-top: BorderSide(color: AppTheme.border),
-),
-boxShadow: [
-BoxShadow(
-color: AppTheme.primary.withValues(alpha: 0.06),
-blurRadius: 16,
-offset: const Offset(0, -4),
-),
-],
-),
-child: SafeArea(
-top: false,
-child: NavigationBar(
-height: 66,
-backgroundColor: AppTheme.surface,
-surfaceTintColor: Colors.transparent,
-elevation: 0,
-selectedIndex: selectedIndex,
-onDestinationSelected: _selectTab,
-indicatorColor: AppTheme.blueLight,
-labelBehavior:
-NavigationDestinationLabelBehavior.alwaysShow,
-destinations: const [
-NavigationDestination(
-icon: Icon(Icons.home_outlined),
-selectedIcon: Icon(Icons.home_rounded),
-label: 'Home',
-),
-  NavigationDestination(
-    icon: Icon(Icons.access_time_outlined),
-    selectedIcon: Icon(Icons.access_time_filled_rounded),
-    label: 'Attendance',
-  ),
-  NavigationDestination(
-    icon: Icon(Icons.task_outlined),
-    selectedIcon: Icon(Icons.task_rounded),
-    label: 'Tasks',
-  ),
-
+    bottomNavigationBar: Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withValues(alpha: 0.08),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: NavigationBarTheme(
+          data: NavigationBarThemeData(
+            height: 68,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            indicatorColor: AppTheme.blueLight,
+            indicatorShape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+              final isSelected = states.contains(WidgetState.selected);
+              return IconThemeData(
+                size: 22,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : AppTheme.textSecondary,
+              );
+            }),
+            labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
+              final isSelected = states.contains(WidgetState.selected);
+              return TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : AppTheme.textSecondary,
+                letterSpacing: 0.2,
+              );
+            }),
+          ),
+          child: NavigationBar(
+            selectedIndex: selectedIndex,
+            onDestinationSelected: _selectTab,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home_rounded),
+                label: 'Home',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.access_time_outlined),
+                selectedIcon: Icon(Icons.access_time_filled_rounded),
+                label: 'Attendance',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.task_outlined),
+                selectedIcon: Icon(Icons.task_rounded),
+                label: 'Tasks',
+              ),
               NavigationDestination(
                 icon: Icon(Icons.description_outlined),
                 selectedIcon: Icon(Icons.description_rounded),
@@ -169,8 +195,9 @@ label: 'Home',
           ),
         ),
       ),
-    );
-  }
+    ),
+);
+}
 
 
 void _selectTab(int index) {
@@ -268,7 +295,7 @@ void _selectTab(int index) {
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: const Text(
-                        'INTERNS PORTAL',
+                        'Employee PORTAL',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 10,
